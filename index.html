@@ -1,0 +1,691 @@
+<!DOCTYPE html>
+
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mi Portafolio</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+  :root {
+    --bg: #0d0f0e;
+    --surface: #151817;
+    --surface2: #1c1f1e;
+    --border: rgba(255,255,255,0.07);
+    --border2: rgba(255,255,255,0.12);
+    --text: #e8ede9;
+    --muted: #7a8a7d;
+    --accent: #4ade80;
+    --accent2: #86efac;
+    --red: #f87171;
+    --amber: #fbbf24;
+    --blue: #60a5fa;
+    --mono: 'DM Mono', monospace;
+    --sans: 'DM Sans', sans-serif;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    min-height: 100vh;
+    font-size: 14px;
+    line-height: 1.6;
+  }
+
+/* Layout */
+.shell { display: flex; min-height: 100vh; }
+.sidebar {
+width: 220px;
+flex-shrink: 0;
+border-right: 1px solid var(–border);
+padding: 28px 20px;
+display: flex;
+flex-direction: column;
+gap: 32px;
+position: sticky;
+top: 0;
+height: 100vh;
+overflow-y: auto;
+}
+.main { flex: 1; padding: 36px 40px; max-width: 1100px; overflow: hidden; }
+
+/* Sidebar */
+.logo {
+font-family: var(–mono);
+font-size: 13px;
+font-weight: 500;
+color: var(–accent);
+letter-spacing: 0.04em;
+display: flex;
+align-items: center;
+gap: 8px;
+}
+.logo-dot { width: 7px; height: 7px; border-radius: 50%; background: var(–accent); }
+.nav { display: flex; flex-direction: column; gap: 2px; }
+.nav-item {
+padding: 8px 12px;
+border-radius: 8px;
+font-size: 13px;
+color: var(–muted);
+cursor: pointer;
+display: flex;
+align-items: center;
+gap: 9px;
+transition: all 0.15s;
+border: none;
+background: none;
+width: 100%;
+text-align: left;
+font-family: var(–sans);
+}
+.nav-item:hover { background: var(–surface2); color: var(–text); }
+.nav-item.active { background: var(–surface2); color: var(–accent); }
+.nav-icon { width: 16px; height: 16px; opacity: 0.7; flex-shrink: 0; }
+.nav-label { font-size: 12px; font-weight: 500; color: var(–muted); letter-spacing: 0.08em; text-transform: uppercase; padding: 0 12px; margin-bottom: 4px; }
+
+.sidebar-bottom { margin-top: auto; }
+.last-update {
+font-family: var(–mono);
+font-size: 11px;
+color: var(–muted);
+padding: 10px 12px;
+background: var(–surface);
+border-radius: 8px;
+border: 1px solid var(–border);
+}
+
+/* Header */
+.header {
+display: flex;
+align-items: flex-start;
+justify-content: space-between;
+margin-bottom: 32px;
+gap: 16px;
+flex-wrap: wrap;
+}
+.header-title { font-size: 24px; font-weight: 600; letter-spacing: -0.02em; }
+.header-sub { font-size: 13px; color: var(–muted); margin-top: 3px; font-family: var(–mono); }
+.reload-btn {
+padding: 8px 16px;
+background: var(–surface2);
+border: 1px solid var(–border2);
+border-radius: 8px;
+color: var(–text);
+font-size: 12px;
+font-family: var(–mono);
+cursor: pointer;
+display: flex;
+align-items: center;
+gap: 6px;
+transition: all 0.15s;
+white-space: nowrap;
+}
+.reload-btn:hover { border-color: var(–accent); color: var(–accent); }
+.reload-btn.loading { opacity: 0.5; pointer-events: none; }
+
+/* Metrics */
+.metrics { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 28px; }
+.metric {
+background: var(–surface);
+border: 1px solid var(–border);
+border-radius: 12px;
+padding: 18px 20px;
+transition: border-color 0.15s;
+}
+.metric:hover { border-color: var(–border2); }
+.metric-label { font-size: 11px; font-weight: 500; color: var(–muted); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 8px; }
+.metric-value { font-size: 26px; font-weight: 600; font-family: var(–mono); letter-spacing: -0.02em; line-height: 1; }
+.metric-sub { font-size: 12px; color: var(–muted); margin-top: 6px; font-family: var(–mono); }
+.pos { color: var(–accent); }
+.neg { color: var(–red); }
+.neu { color: var(–amber); }
+
+/* Charts row */
+.charts-row { display: grid; grid-template-columns: 1fr 1.4fr; gap: 14px; margin-bottom: 28px; }
+.card {
+background: var(–surface);
+border: 1px solid var(–border);
+border-radius: 12px;
+padding: 20px 22px;
+}
+.card-title {
+font-size: 11px;
+font-weight: 500;
+color: var(–muted);
+text-transform: uppercase;
+letter-spacing: 0.08em;
+margin-bottom: 18px;
+}
+
+/* Table */
+.table-wrap { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; }
+th {
+font-size: 11px;
+font-weight: 500;
+color: var(–muted);
+text-transform: uppercase;
+letter-spacing: 0.07em;
+padding: 8px 14px;
+text-align: left;
+border-bottom: 1px solid var(–border);
+white-space: nowrap;
+}
+td {
+padding: 13px 14px;
+border-bottom: 1px solid var(–border);
+vertical-align: middle;
+font-size: 13px;
+}
+tr:last-child td { border-bottom: none; }
+tr:hover td { background: rgba(255,255,255,0.02); }
+.ticker { font-family: var(–mono); font-size: 13px; font-weight: 500; color: var(–text); }
+.name-small { font-size: 11px; color: var(–muted); margin-top: 1px; }
+.badge {
+display: inline-block;
+font-size: 10px;
+padding: 2px 8px;
+border-radius: 99px;
+font-weight: 500;
+font-family: var(–mono);
+}
+.badge-accion { background: rgba(96,165,250,0.12); color: var(–blue); border: 1px solid rgba(96,165,250,0.2); }
+.badge-etf { background: rgba(74,222,128,0.1); color: var(–accent); border: 1px solid rgba(74,222,128,0.2); }
+.badge-cripto { background: rgba(251,191,36,0.1); color: var(–amber); border: 1px solid rgba(251,191,36,0.2); }
+.mono { font-family: var(–mono); }
+
+/* Weight bar */
+.weight-row { display: flex; align-items: center; gap: 8px; }
+.weight-bar { flex: 1; height: 3px; background: rgba(255,255,255,0.07); border-radius: 2px; min-width: 50px; }
+.weight-fill { height: 100%; border-radius: 2px; background: var(–accent); }
+.weight-pct { font-size: 11px; color: var(–muted); font-family: var(–mono); min-width: 30px; text-align: right; }
+
+/* Section header */
+.section-header {
+display: flex;
+align-items: center;
+justify-content: space-between;
+margin-bottom: 14px;
+margin-top: 28px;
+}
+.section-title { font-size: 15px; font-weight: 600; }
+
+/* Dividends */
+.div-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px; }
+.div-card {
+background: var(–surface);
+border: 1px solid var(–border);
+border-radius: 10px;
+padding: 14px 16px;
+}
+.div-date { font-size: 11px; color: var(–muted); font-family: var(–mono); margin-bottom: 4px; }
+.div-ticker { font-size: 13px; font-weight: 600; font-family: var(–mono); color: var(–accent2); }
+.div-amount { font-size: 20px; font-weight: 600; font-family: var(–mono); margin: 4px 0; }
+.div-yield { font-size: 11px; color: var(–muted); }
+
+/* Empty state */
+.empty {
+text-align: center;
+padding: 48px 24px;
+color: var(–muted);
+font-size: 13px;
+}
+.empty-icon { font-size: 32px; margin-bottom: 12px; opacity: 0.5; }
+
+/* Loading */
+.loading-bar {
+height: 2px;
+background: var(–surface2);
+border-radius: 1px;
+overflow: hidden;
+margin-bottom: 24px;
+}
+.loading-fill {
+height: 100%;
+background: var(–accent);
+border-radius: 1px;
+width: 0%;
+transition: width 0.3s ease;
+}
+
+/* Error */
+.error-box {
+background: rgba(248,113,113,0.08);
+border: 1px solid rgba(248,113,113,0.2);
+border-radius: 10px;
+padding: 16px 20px;
+font-size: 13px;
+color: var(–red);
+margin-bottom: 20px;
+display: none;
+}
+
+/* Responsive */
+@media (max-width: 900px) {
+.shell { flex-direction: column; }
+.sidebar { width: 100%; height: auto; position: static; flex-direction: row; flex-wrap: wrap; padding: 16px 20px; gap: 16px; border-right: none; border-bottom: 1px solid var(–border); }
+.main { padding: 24px 20px; }
+.metrics { grid-template-columns: repeat(2, 1fr); }
+.charts-row { grid-template-columns: 1fr; }
+.nav { flex-direction: row; flex-wrap: wrap; }
+.sidebar-bottom { display: none; }
+}
+@media (max-width: 500px) {
+.metrics { grid-template-columns: 1fr 1fr; }
+}
+
+/* Page sections */
+.page { display: none; }
+.page.active { display: block; }
+
+/* Animation */
+@keyframes fadeUp {
+from { opacity: 0; transform: translateY(10px); }
+to { opacity: 1; transform: translateY(0); }
+}
+.fade-up { animation: fadeUp 0.3s ease forwards; }
+
+/* Legend */
+.legend { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 14px; }
+.legend-item { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(–muted); font-family: var(–mono); }
+.legend-dot { width: 8px; height: 8px; border-radius: 2px; flex-shrink: 0; }
+</style>
+
+</head>
+<body>
+
+<div class="shell">
+
+  <!-- Sidebar -->
+
+  <aside class="sidebar">
+    <div class="logo">
+      <div class="logo-dot"></div>
+      PORTAFOLIO
+    </div>
+    <nav class="nav">
+      <div class="nav-label">Vistas</div>
+      <button class="nav-item active" onclick="showPage('resumen')">
+        <svg class="nav-icon" fill="none" viewBox="0 0 16 16"><rect x="1" y="1" width="6" height="6" rx="1.5" stroke="currentColor" stroke-width="1.2"/><rect x="9" y="1" width="6" height="6" rx="1.5" stroke="currentColor" stroke-width="1.2"/><rect x="1" y="9" width="6" height="6" rx="1.5" stroke="currentColor" stroke-width="1.2"/><rect x="9" y="9" width="6" height="6" rx="1.5" stroke="currentColor" stroke-width="1.2"/></svg>
+        Resumen
+      </button>
+      <button class="nav-item" onclick="showPage('acciones')">
+        <svg class="nav-icon" fill="none" viewBox="0 0 16 16"><polyline points="1,12 5,7 8,9 12,4 15,6" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        Acciones & ETFs
+      </button>
+      <button class="nav-item" onclick="showPage('cripto')">
+        <svg class="nav-icon" fill="none" viewBox="0 0 16 16"><circle cx="8" cy="8" r="6.5" stroke="currentColor" stroke-width="1.2"/><path d="M6 5.5h3c.8 0 1.5.5 1.5 1.3s-.7 1.2-1.5 1.2H6V5.5z" stroke="currentColor" stroke-width="1"/><path d="M6 8h3.5c.9 0 1.5.5 1.5 1.3S10.4 10.5 9.5 10.5H6V8z" stroke="currentColor" stroke-width="1"/><line x1="7" y1="4.5" x2="7" y2="11.5" stroke="currentColor" stroke-width="1"/><line x1="9.5" y1="4.5" x2="9.5" y2="11.5" stroke="currentColor" stroke-width="1"/></svg>
+        Cripto
+      </button>
+      <button class="nav-item" onclick="showPage('dividendos')">
+        <svg class="nav-icon" fill="none" viewBox="0 0 16 16"><circle cx="8" cy="8" r="6.5" stroke="currentColor" stroke-width="1.2"/><path d="M8 5v6M5.5 7l2.5-2 2.5 2" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
+        Dividendos
+      </button>
+    </nav>
+    <div class="sidebar-bottom">
+      <div class="last-update" id="last-update">Cargando...</div>
+    </div>
+  </aside>
+
+  <!-- Main -->
+
+  <main class="main">
+    <div class="loading-bar"><div class="loading-fill" id="loading-fill"></div></div>
+    <div class="error-box" id="error-box"></div>
+
+```
+<!-- RESUMEN -->
+<div class="page active" id="page-resumen">
+  <div class="header">
+    <div>
+      <div class="header-title">Resumen</div>
+      <div class="header-sub" id="header-sub">Cargando datos...</div>
+    </div>
+    <button class="reload-btn" id="reload-btn" onclick="loadData()">
+      <svg width="12" height="12" fill="none" viewBox="0 0 12 12"><path d="M1 6a5 5 0 1 0 1.2-3.2" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/><polyline points="1,2 1,6 5,6" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      Actualizar
+    </button>
+  </div>
+
+  <div class="metrics" id="metrics-row">
+    <div class="metric"><div class="metric-label">Valor total</div><div class="metric-value" id="m-total">—</div><div class="metric-sub" id="m-pnl">—</div></div>
+    <div class="metric"><div class="metric-label">Rendimiento</div><div class="metric-value" id="m-ret">—</div><div class="metric-sub">desde inicio</div></div>
+    <div class="metric"><div class="metric-label">Dividendos</div><div class="metric-value" id="m-div">—</div><div class="metric-sub">total recibido</div></div>
+    <div class="metric"><div class="metric-label">Posiciones</div><div class="metric-value" id="m-pos">—</div><div class="metric-sub">activos</div></div>
+  </div>
+
+  <div class="charts-row">
+    <div class="card">
+      <div class="card-title">Distribución</div>
+      <div style="position:relative;height:180px;">
+        <canvas id="donut-chart"></canvas>
+      </div>
+      <div class="legend" id="donut-legend"></div>
+    </div>
+    <div class="card">
+      <div class="card-title">Posiciones — vista rápida</div>
+      <div style="position:relative;height:180px;">
+        <canvas id="bar-chart"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <div class="section-header">
+    <div class="section-title">Todas las posiciones</div>
+  </div>
+  <div class="card">
+    <div class="table-wrap">
+      <table id="all-table">
+        <thead><tr>
+          <th>Activo</th><th>Tipo</th><th>Invertido</th><th>Valor actual</th><th>P&L</th><th>%</th><th>Peso</th>
+        </tr></thead>
+        <tbody id="all-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ACCIONES -->
+<div class="page" id="page-acciones">
+  <div class="header">
+    <div><div class="header-title">Acciones & ETFs</div><div class="header-sub">Renta variable</div></div>
+  </div>
+  <div class="card">
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Ticker</th><th>Nombre</th><th>Cantidad</th><th>P. Compra</th><th>P. Actual</th><th>Invertido</th><th>Valor</th><th>P&L</th><th>%</th></tr></thead>
+        <tbody id="acc-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- CRIPTO -->
+<div class="page" id="page-cripto">
+  <div class="header">
+    <div><div class="header-title">Criptomonedas</div><div class="header-sub">Activos digitales</div></div>
+  </div>
+  <div class="card">
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Símbolo</th><th>Nombre</th><th>Cantidad</th><th>P. Compra</th><th>P. Actual</th><th>Invertido</th><th>Valor</th><th>P&L</th><th>%</th></tr></thead>
+        <tbody id="cri-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- DIVIDENDOS -->
+<div class="page" id="page-dividendos">
+  <div class="header">
+    <div><div class="header-title">Dividendos</div><div class="header-sub">Historial de ingresos pasivos</div></div>
+  </div>
+  <div class="metrics" style="grid-template-columns: repeat(3,1fr); margin-bottom:24px;">
+    <div class="metric"><div class="metric-label">Total recibido</div><div class="metric-value pos" id="div-total">—</div></div>
+    <div class="metric"><div class="metric-label">Último pago</div><div class="metric-value" id="div-ultimo">—</div></div>
+    <div class="metric"><div class="metric-label">Pagos registrados</div><div class="metric-value" id="div-count">—</div></div>
+  </div>
+  <div class="div-grid" id="div-grid"></div>
+</div>
+```
+
+  </main>
+</div>
+
+<script>
+// ─── CONFIGURACIÓN ───────────────────────────────────────────────────────────
+const SHEET_ID = '1Ltio7naKEmPccDhIc1AUDbPEe-FyoDfl1DNEsvocUAI';
+const SHEET_URL = (tab) =>
+  `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&sheet=${encodeURIComponent(tab)}`;
+
+// ─── STATE ────────────────────────────────────────────────────────────────────
+let state = { acciones: [], cripto: [], dividendos: [] };
+let donutChart, barChart;
+
+// ─── NAVIGATION ──────────────────────────────────────────────────────────────
+function showPage(id) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('page-' + id).classList.add('active');
+  event.currentTarget.classList.add('active');
+}
+
+// ─── FORMAT HELPERS ───────────────────────────────────────────────────────────
+const fmt = (n, dec=2) => isNaN(n) ? '—' : n.toLocaleString('es-CL', {minimumFractionDigits:dec, maximumFractionDigits:dec});
+const fmtMoney = (n) => isNaN(n) ? '—' : '$' + fmt(n, 0);
+const fmtPct = (n) => isNaN(n) ? '—' : (n >= 0 ? '+' : '') + fmt(n, 1) + '%';
+const cls = (n) => n >= 0 ? 'pos' : 'neg';
+
+// ─── PARSE GOOGLE SHEETS JSON ─────────────────────────────────────────────────
+function parseSheet(raw) {
+  const json = JSON.parse(raw.replace(/^.*?\(/, '').replace(/\);?\s*$/, ''));
+  const cols = json.table.cols.map(c => c.label);
+  const rows = (json.table.rows || []).map(r =>
+    Object.fromEntries(cols.map((c, i) => [c, r.c[i]?.v ?? '']))
+  );
+  return rows.filter(r => Object.values(r).some(v => v !== ''));
+}
+
+// ─── LOAD DATA ────────────────────────────────────────────────────────────────
+async function loadData() {
+  const btn = document.getElementById('reload-btn');
+  const fill = document.getElementById('loading-fill');
+  const errBox = document.getElementById('error-box');
+
+  btn.classList.add('loading');
+  errBox.style.display = 'none';
+  fill.style.width = '20%';
+
+  try {
+    const [rAcc, rCri, rDiv] = await Promise.all([
+      fetch(SHEET_URL('Acciones')).then(r => r.text()),
+      fetch(SHEET_URL('Cripto')).then(r => r.text()),
+      fetch(SHEET_URL('Dividendos')).then(r => r.text()),
+    ]);
+
+    fill.style.width = '70%';
+
+    state.acciones = parseSheet(rAcc);
+    state.cripto   = parseSheet(rCri);
+    state.dividendos = parseSheet(rDiv);
+
+    fill.style.width = '100%';
+    setTimeout(() => fill.style.width = '0%', 500);
+
+    renderAll();
+
+    const now = new Date();
+    document.getElementById('last-update').textContent =
+      'Actualizado ' + now.toLocaleTimeString('es-CL', {hour:'2-digit', minute:'2-digit'});
+    document.getElementById('header-sub').textContent =
+      now.toLocaleDateString('es-CL', {weekday:'long', day:'numeric', month:'long'});
+
+  } catch(e) {
+    fill.style.width = '0%';
+    errBox.style.display = 'block';
+    errBox.textContent = 'No se pudo cargar los datos. Verifica que la hoja esté compartida públicamente. Error: ' + e.message;
+  }
+
+  btn.classList.remove('loading');
+}
+
+// ─── CALCULATE ────────────────────────────────────────────────────────────────
+function calcRow(r, tipoKey) {
+  const cant  = parseFloat(r['Cantidad']) || 0;
+  const pComp = parseFloat(r['Precio_Compra']) || 0;
+  const pAct  = parseFloat(r['Precio_Actual']) || 0;
+  const inv   = cant * pComp;
+  const val   = cant * pAct;
+  const pnl   = val - inv;
+  const pct   = inv > 0 ? (pnl / inv) * 100 : 0;
+  return { ...r, cant, pComp, pAct, inv, val, pnl, pct, tipo: tipoKey };
+}
+
+// ─── RENDER ALL ───────────────────────────────────────────────────────────────
+function renderAll() {
+  const accs = state.acciones.map(r => calcRow(r, 'accion'));
+  const cris = state.cripto.map(r => calcRow(r, 'cripto'));
+  const all  = [...accs, ...cris];
+
+  const totalVal = all.reduce((s, r) => s + r.val, 0);
+  const totalInv = all.reduce((s, r) => s + r.inv, 0);
+  const totalPnl = totalVal - totalInv;
+  const totalPct = totalInv > 0 ? (totalPnl / totalInv) * 100 : 0;
+  const totalDiv = state.dividendos.reduce((s, r) => s + (parseFloat(r['Monto']) || 0), 0);
+
+  // Metrics
+  document.getElementById('m-total').textContent = fmtMoney(totalVal);
+  document.getElementById('m-pnl').innerHTML = `<span class="${cls(totalPnl)}">${totalPnl >= 0 ? '▲' : '▼'} ${fmtMoney(Math.abs(totalPnl))}</span>`;
+  document.getElementById('m-ret').innerHTML = `<span class="${cls(totalPct)}">${fmtPct(totalPct)}</span>`;
+  document.getElementById('m-div').textContent = fmtMoney(totalDiv);
+  document.getElementById('m-pos').textContent = all.length;
+
+  // All table
+  renderTable('all-tbody', all, totalVal, true);
+  renderTable('acc-tbody', accs, totalVal, false);
+  renderTable('cri-tbody', cris, totalVal, false);
+
+  // Dividends
+  renderDividends(totalDiv);
+
+  // Charts
+  renderDonut(accs, cris, totalVal);
+  renderBar(all);
+}
+
+// ─── RENDER TABLE ─────────────────────────────────────────────────────────────
+function renderTable(tbodyId, rows, totalVal, showType) {
+  const tbody = document.getElementById(tbodyId);
+  if (!rows.length) {
+    tbody.innerHTML = `<tr><td colspan="9"><div class="empty"><div class="empty-icon">◦</div>Sin datos. Agrega filas en tu Google Sheet.</div></td></tr>`;
+    return;
+  }
+
+  const tickerKey = rows[0]?.tipo === 'cripto' ? 'Simbolo' : (rows[0]?.Ticker !== undefined ? 'Ticker' : 'Simbolo');
+
+  tbody.innerHTML = rows.map(r => {
+    const ticker = r['Ticker'] || r['Simbolo'] || '—';
+    const nombre = r['Nombre'] || '';
+    const peso   = totalVal > 0 ? (r.val / totalVal) * 100 : 0;
+    const badgeCls = r.tipo === 'cripto' ? 'badge-cripto' : (nombre.toLowerCase().includes('etf') || ticker.length > 4 ? 'badge-etf' : 'badge-accion');
+    const badgeLabel = r.tipo === 'cripto' ? 'Cripto' : (nombre.toLowerCase().includes('etf') ? 'ETF' : 'Acción');
+
+    if (showType) {
+      return `<tr>
+        <td><div class="ticker">${ticker}</div><div class="name-small">${nombre}</div></td>
+        <td><span class="badge ${badgeCls}">${badgeLabel}</span></td>
+        <td class="mono">${fmtMoney(r.inv)}</td>
+        <td class="mono">${fmtMoney(r.val)}</td>
+        <td class="mono ${cls(r.pnl)}">${r.pnl >= 0 ? '+' : ''}${fmtMoney(r.pnl)}</td>
+        <td class="mono ${cls(r.pct)}">${fmtPct(r.pct)}</td>
+        <td><div class="weight-row"><div class="weight-bar"><div class="weight-fill" style="width:${Math.min(peso,100)}%"></div></div><div class="weight-pct">${fmt(peso,1)}%</div></div></td>
+      </tr>`;
+    } else {
+      return `<tr>
+        <td class="ticker">${ticker}</td>
+        <td>${nombre}</td>
+        <td class="mono">${fmt(r.cant)}</td>
+        <td class="mono">${fmtMoney(r.pComp)}</td>
+        <td class="mono">${fmtMoney(r.pAct)}</td>
+        <td class="mono">${fmtMoney(r.inv)}</td>
+        <td class="mono">${fmtMoney(r.val)}</td>
+        <td class="mono ${cls(r.pnl)}">${r.pnl >= 0 ? '+' : ''}${fmtMoney(r.pnl)}</td>
+        <td class="mono ${cls(r.pct)}">${fmtPct(r.pct)}</td>
+      </tr>`;
+    }
+  }).join('');
+}
+
+// ─── RENDER DIVIDENDS ────────────────────────────────────────────────────────
+function renderDividends(totalDiv) {
+  const divs = state.dividendos;
+  document.getElementById('div-total').textContent = fmtMoney(totalDiv);
+  document.getElementById('div-count').textContent = divs.length;
+
+  if (divs.length) {
+    const last = divs[divs.length - 1];
+    document.getElementById('div-ultimo').textContent = fmtMoney(parseFloat(last['Monto']) || 0);
+  }
+
+  const grid = document.getElementById('div-grid');
+  if (!divs.length) {
+    grid.innerHTML = `<div class="empty"><div class="empty-icon">◦</div>Sin dividendos registrados.</div>`;
+    return;
+  }
+
+  grid.innerHTML = [...divs].reverse().map(r => `
+    <div class="div-card fade-up">
+      <div class="div-date">${r['Fecha'] || '—'}</div>
+      <div class="div-ticker">${r['Ticker'] || '—'}</div>
+      <div class="div-amount pos">${fmtMoney(parseFloat(r['Monto']) || 0)}</div>
+      <div class="div-yield">${r['Notas'] || r['Moneda'] || ''}</div>
+    </div>
+  `).join('');
+}
+
+// ─── CHARTS ───────────────────────────────────────────────────────────────────
+function renderDonut(accs, cris, totalVal) {
+  const accVal  = accs.filter(r => !r['Nombre']?.toLowerCase().includes('etf')).reduce((s,r) => s+r.val, 0);
+  const etfVal  = accs.filter(r => r['Nombre']?.toLowerCase().includes('etf')).reduce((s,r) => s+r.val, 0);
+  const criVal  = cris.reduce((s,r) => s+r.val, 0);
+
+  const labels = ['Acciones','ETFs','Cripto'].filter((_,i) => [accVal,etfVal,criVal][i] > 0);
+  const data   = [accVal, etfVal, criVal].filter(v => v > 0);
+  const colors = ['#60a5fa','#4ade80','#fbbf24'];
+  const usedColors = colors.filter((_,i) => [accVal,etfVal,criVal][i] > 0);
+
+  if (donutChart) donutChart.destroy();
+  donutChart = new Chart(document.getElementById('donut-chart'), {
+    type: 'doughnut',
+    data: { labels, datasets: [{ data, backgroundColor: usedColors, borderWidth: 0, hoverOffset: 4 }] },
+    options: {
+      responsive: true, maintainAspectRatio: false, cutout: '74%',
+      plugins: {
+        legend: { display: false },
+        tooltip: { callbacks: { label: ctx => ' ' + ctx.label + ': $' + fmt(ctx.raw,0) + ' (' + fmt(totalVal > 0 ? ctx.raw/totalVal*100 : 0,1) + '%)' } }
+      }
+    }
+  });
+
+  const legend = document.getElementById('donut-legend');
+  legend.innerHTML = labels.map((l,i) => `
+    <div class="legend-item">
+      <div class="legend-dot" style="background:${usedColors[i]}"></div>
+      ${l} ${fmt(totalVal > 0 ? data[i]/totalVal*100 : 0,0)}%
+    </div>`).join('');
+}
+
+function renderBar(all) {
+  if (!all.length) return;
+  const top = [...all].sort((a,b) => b.val - a.val).slice(0, 8);
+  const colors = top.map(r => r.tipo === 'cripto' ? '#fbbf24' : (r['Nombre']?.toLowerCase().includes('etf') ? '#4ade80' : '#60a5fa'));
+
+  if (barChart) barChart.destroy();
+  barChart = new Chart(document.getElementById('bar-chart'), {
+    type: 'bar',
+    data: {
+      labels: top.map(r => r['Ticker'] || r['Simbolo']),
+      datasets: [
+        { label: 'Valor', data: top.map(r => r.val), backgroundColor: colors, borderRadius: 4, borderWidth: 0 },
+        { label: 'Invertido', data: top.map(r => r.inv), backgroundColor: 'rgba(255,255,255,0.06)', borderRadius: 4, borderWidth: 0 }
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => ' ' + ctx.dataset.label + ': $' + fmt(ctx.raw,0) } } },
+      scales: {
+        x: { grid: { display: false }, ticks: { color: '#7a8a7d', font: { size: 11, family: 'DM Mono' } } },
+        y: { grid: { color: 'rgba(255,255,255,0.04)' }, ticks: { color: '#7a8a7d', font: { size: 11 }, callback: v => '$' + (v >= 1000 ? (v/1000).toFixed(0)+'k' : v) } }
+      }
+    }
+  });
+}
+
+// ─── INIT ──────────────────────────────────────────────────────────────────────
+loadData();
+</script>
+
+</body>
+</html>
